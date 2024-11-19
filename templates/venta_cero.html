@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-16">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistemas BI - BST</title>
+    <link rel="stylesheet" href="{{ url_for('static',filename='css/venta_cero.css') }}">
+
+    <script src="https://unpkg.com/xlsx@0.16.9/dist/xlsx.full.min.js"></script>
+    <script src="https://unpkg.com/file-saverjs@latest/FileSaver.min.js"></script>
+    <script src="https://unpkg.com/tableexport@latest/dist/js/tableexport.min.js"></script>  
+</head>
+<body onload="waitloader()">
+
+    <div id="loader">
+    </div>
+
+    <div class="id_container" id="id_cont">
+        <div class="cab">
+            <h1>Reporte Venta Cero</h1>
+        </div>
+
+        <div class="colnavegacion">
+            <ul>
+                <li><a href="{{url_for('menu')}}">Menu</a></li>
+                <!--<li><a style="cursor:pointer;" id="id_exportar">Export Excel</a></li>-->
+                <li><a style="cursor:pointer;" id="id_imprimir">Imprimir</a></li>
+            </ul>
+        </div>
+
+        <div class="colfiltros">
+            <div class="colfiltrosdet">
+
+                <div class="colfiltrosres">
+                    <label for="id_formato">Formato:</label>
+                </div>
+                <div class="colfiltrosres">
+                    <select id="id_formato" onchange="local()">
+                    </select>
+                </div>
+
+                <div class="colfiltrosres">
+                    <label for="id_local">Local:</label>
+                </div>
+                <div class="colfiltrosres">
+                    <select id="id_local"></select>
+                    </select>
+                </div>
+                <div class="colfiltrosres">
+                    <label for="id_area">Area:</label>
+                </div>
+                <div class="colfiltrosres">
+                    <select id="id_area"></select>
+                    </select>
+                </div>                  
+            </div>
+
+            <div class="c_button">
+                <button onclick="cargar_table_vc()" style="cursor:pointer;">Consultar</button>
+            </div>
+            <div id="id_imp">
+                <div class="titulo_tb">
+                    <h1 style="color:black;font-size:30px;font-weight: 500px;"id="id_titulo_table"></h1>
+                </div>
+    
+                <div class="totales_tb">
+                    <h1 style="color:black;font-size:15px;font-weight: 500px;text-align: left;" id="id_total_tb_tienda"></h1>
+                    <h1 style="color:black;font-size:15px;font-weight: 500px;text-align: left;" id="id_total_tb_sv_su"></h1>
+                    <h1 style="color:black;font-size:15px;font-weight: 500px;text-align: right;margin-bottom: 10px;" id="id_total_tb_f"></h1>
+                </div>
+    
+                <div class="tablepollos">
+                    <div id="loader_table">
+                    </div>
+                    <div>
+                        <!--<div class="scrollable-table">-->
+                        <table id="id_table">                     
+                        </table>
+                        <!--</div>-->
+                    </div>  
+                </div>
+            </div>
+            
+            <div class="border_inferior">
+            </div>
+            <div class="footer">
+                <p>Sistemas BI © 2025 - BST</p>
+            </div>
+        </div>  
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jQuery.print/1.6.2/jQuery.print.min.js" integrity="sha512-t3XNbzH2GEXeT9juLjifw/5ejswnjWWMMDxsdCg4+MmvrM+MwqGhxlWeFJ53xN/SBHPDnW0gXYvBx/afZZfGMQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    
+    <script>
+    
+    function promise_local(formato){
+            return new Promise((resolve, reject) => {
+                fetch('venta_cero_local/'+formato).then((response)=>{
+                response.json().then((data)=>{
+                        optionHtmlLocal=""
+                        for (i of data.localArray){
+                            optionHtmlLocal+=`<option>${i.local}</option>`
+                        }
+                        resolve({
+                            data_local:optionHtmlLocal
+                        })
+
+                })})
+                
+            })
+        }
+    function promise_formato_select(){
+        return new Promise((resolve,reject)=>{
+            formato=document.getElementById('id_formato').value
+                resolve(
+                    {
+                    formato:formato
+                    }
+                )
+    })}
+    
+    async function formato_local_area_table(){
+        const promise_formato=new Promise((resolve,reject)=>{
+                fetch('venta_cero_formato').then(
+                    (response)=>{
+                        response.json().then((data)=>{
+                            if (response.status=200){
+                                optionHtmlFormato=""
+                                for(i of data.formatoArray){
+                                    optionHtmlFormato+=`<option>${i.formato}</option>`
+                                    }
+                                resolve({
+                                data:optionHtmlFormato
+                            })
+                            }
+                        })
+                    }
+                )
+            })
+     
+        document.getElementById("id_formato").innerHTML=await promise_formato.then((resolve)=>{
+            return resolve.data
+        })
+
+        formato=await promise_formato_select().then((resolve)=>{
+            return resolve.formato
+        })
+
+        document.getElementById("id_local").innerHTML=await promise_local(formato).then((resolve)=>{
+            return resolve.data_local
+        })
+        cargar_table_vc()
+    }
+    
+    async function local(){
+        formato=await promise_formato_select().then((resolve=>{
+            return resolve.formato
+        }))
+        document.getElementById("id_local").innerHTML=await promise_local(formato).then((resolve)=>{
+            return resolve.data_local
+        })
+        }
+    
+    async function area(){
+            const promise_formato=new Promise((resolve,reject)=>{
+                fetch('venta_cero_area').then(
+                    (response)=>{
+                        response.json().then((data)=>{
+                            if (response.status=200){
+                                optionHtmlArea=""
+                                for(i of data.areaArray){
+                                    optionHtmlArea+=`<option>${i.nombre_area}</option>`
+                                    }
+                                resolve({
+                                data:optionHtmlArea
+                            })
+                            }
+                        })
+                    }
+                )
+            })
+     
+         document.getElementById("id_area").innerHTML=await promise_formato.then(resolve=>{
+            return resolve.data
+        })
+        
+    }
+
+    function select_local(){
+        return new Promise((resolve, reject) => {
+            setTimeout(()=>{
+                const selectLocal=document.getElementById("id_local")
+                let local_select=selectLocal.value;
+                resolve(
+                {
+                    local_select:local_select
+                })
+            },
+            2
+        )
+        })
+    }
+
+    function select_area(){
+        return new Promise((resolve, reject) => {
+            setTimeout(()=>{
+                const selectArea=document.getElementById("id_area")
+                let area_select=selectArea.value;
+                resolve(
+                {
+                    area_select:area_select
+                })
+            },
+            2
+        )
+        })
+    }
+
+    function venta_cero_group(local,area){
+            return new Promise((resolve,reject)=>{
+                fetch('venta_cero_group/'+local+'/'+area).then(
+                    (response)=>{
+                        response.json().then((data)=>{
+                            if (response.status=200){
+                                optionHtmlArea=""
+                                i=data.ventacerogrouparray[0]
+                                n=(i.length)
+                                for(let a=0;a<n;a++){
+                                    var stock_unidad=i[a].Stock_Unidad
+                                    var stock_valorizado=i[a].stock_valorizado
+                                }
+                                console.log(i)
+                                resolve({
+                                    stock_unidad:stock_unidad,
+                                    stock_valorizado:stock_valorizado
+                            })
+                            }
+                        })
+                    }
+                )
+            })
+     
+     
+    }
+
+    async function val_data_venta_cero(local,area){
+
+        const response= await fetch('venta_cero_list/'+local+'/'+area)
+        let req_status= response.status
+        console.log(req_status)
+        switch (req_status){
+            case 200:
+                var data=await response.json()
+                return new Promise((resolve, reject) => {
+                    i=data.ventaceroarray[0]
+                        n=(i.length)
+                        if (n==0){
+                            var _ta=`<tr><td colspan="11" style="text-align: center;">No Hay Data</td></tr>`
+                            resolve({
+                                data:'200no',
+                                _ta:_ta
+                            })
+                        }
+                        else{
+                            var _sa=""
+                            for(let a=0;a<n;a++){
+                                    _sa+=`<tr><td>${i[a].nombre_linea}</td><td>${i[a].nombre_familia}</td><td>${i[a].codigo_producto}</td><td>${i[a].ean.toString()}</td><td>${i[a].nombre_producto.toString()}</td><td>${i[a].Stock}</td><td>${i[a].Valorizado}</td></tr>` 
+                                }
+                            resolve(
+                                {
+                                    data:'200si',
+                                    _ta:_sa
+                                }
+                            )
+                        }
+                })
+                break;
+            case 404:
+                return new Promise((resolve, reject) => {
+                        var _ta400=`<tr><td colspan="11" style="text-align: center;">Red Saturada e Inestable, Por favor volver a cargar la pagina</td></tr>`
+                            reject({
+                                data:'400no',
+                                _ta400:_ta400
+                            })
+                })
+                break;
+            default:
+                return new Promise((resolve, reject) => {
+                    console.log("_nulo")
+                    var _tanulo=`<tr><td colspan="11" style="text-align: center;">Red inestable, Por favor volver a cargar la pagina. Si el problema persiste, contactar a Sistemas BI...</td></tr>`
+                        reject({
+                            data:'nonulo',
+                            _tanulo:_tanulo
+                        })
+                })
+                break;
+        }
+    }
+
+    function fecha_hora(){
+        return new Promise ((resolve,reject)=>{
+            let now=new Date()
+
+            let año=now.getFullYear()
+            let mes=now.getMonth()
+            mes +=1
+            if ((mes.toString().length)==1){
+                mes="0"+mes
+            }
+            let dia=now.getDate()
+            if ((dia.toString().length)==1){
+                dia="0"+dia
+            }
+            let hora=now.getHours()
+            let minutos=now.getMinutes()
+            if ((minutos.toString().length)==1){
+                minutos="0"+minutos
+            }
+            fecha=año+"/"+mes+"/"+dia
+            hora=hora+":"+minutos
+
+            let fecha_hora=fecha+" "+hora
+
+            resolve({
+                fecha_hora:fecha_hora
+            })
+
+        })
+    }
+
+    function set_datos_table(titulo,local,stock_valorizado,stock_unidad,fecha_act,td_table){
+        document.getElementById("id_titulo_table").innerHTML=`${titulo}`
+        document.getElementById("id_total_tb_tienda").innerHTML=`Local:${local}`
+        document.getElementById("id_total_tb_sv_su").innerHTML=`${stock_valorizado} ${stock_unidad}`
+        document.getElementById("id_total_tb_f").innerHTML=`Fecha:${fecha_act}`
+        document.getElementById("id_table").innerHTML=td_table    
+    }
+
+
+    async function cargar_table_vc(){
+        let local= await select_local().then((resolve)=>{return resolve.local_select})
+        let area= await select_area().then((resolve)=>{return resolve.area_select})
+
+        document.getElementById("loader_table").style.display='block';
+        document.getElementById("id_table").style.display='None';
+
+        document.getElementById("id_titulo_table").style.display='None';
+        document.getElementById("id_total_tb_tienda").style.display='None';
+        document.getElementById("id_total_tb_sv_su").style.display='None';
+        document.getElementById("id_total_tb_f").style.display='None';
+
+        let fecha_act=await fecha_hora().then((resolve)=>{return resolve.fecha_hora})
+        let flag_data=await val_data_venta_cero(local,area).then((resolve)=>{return resolve.data}).catch((reject)=>{return reject.data})
+        switch (flag_data){
+            case "200si":
+                let stock_unidad=await venta_cero_group(local,area).then((resolve)=>{return resolve.stock_unidad})
+                let stock_valorizado=await venta_cero_group(local,area).then((resolve)=>{return resolve.stock_valorizado})
+                td_table=""
+                td_table=`<thead><tr><th style="width:5%">Descripción de Linea</th><th style="width:15%">Descripción de Familia</th><th style="width:6%">Codigo de Producto</th><th style="width:8%">Ean</th><th style="width:57%">Descripción de Producto</th><th style="width:5%">stock_und</th><th style="width:5%">valor</th></tr></thead><tbody>`
+                let table=await val_data_venta_cero(local,area).then((resolve)=>{return resolve._ta})
+                td_table+=table
+                td_table+=`</tbody>`
+                set_datos_table("Venta Cero",local,stock_valorizado,stock_unidad,fecha_act,td_table)
+                break;
+            case "200no":
+                td_table=""
+                td_table=`<thead><tr><th>Descripción de Linea</th><th>Descripción de Familia</th><th>Codigo de Producto</th><th>Ean</th><th>Descripción de Producto</th><th>stock_und</th><th>valor</th></tr></thead><tbody>`
+                let tableno=await val_data_venta_cero(local,area).then((resolve)=>{return resolve._ta})
+                td_table+=tableno
+                td_table+=`</tbody>`
+                set_datos_table("Venta Cero",local,"Stock_Valorizado:S./0.00","Stock_Unidad:0",fecha_act,td_table)
+                break;
+            case "400no":
+                td_table=""
+                td_table=`<thead><tr><th>Descripción de Linea</th><th>Descripción de Familia</th><th>Codigo de Producto</th><th>Ean</th><th>Descripción de Producto</th><th>stock_und</th><th>valor</th></tr></thead><tbody>`
+                let table400no=await val_data_venta_cero(local,area).catch((reject)=>{return reject._ta400})
+                td_table+=table400no
+                td_table+=`</tbody>`
+                set_datos_table("Venta Cero",local,"Stock_Valorizado:S./0.00","Stock_Unidad:0",fecha_act,td_table)
+            break;
+            case "nonulo":
+                td_table=""
+                td_table=`<thead><tr><th>Descripción de Linea</th><th>Descripción de Familia</th><th>Codigo de Producto</th><th>Ean</th><th>Descripción de Producto</th><th>stock_und</th><th>valor</th></tr></thead><tbody>`
+                let tablenonulo=await val_data_venta_cero(local,area).catch((reject)=>{return reject._tanulo})
+                td_table+=tablenonulo
+                td_table+=`</tbody>`
+                set_datos_table("Venta Cero",local,"Stock_Valorizado:S./0.00","Stock_Unidad:0",fecha_act,td_table)
+                break;  
+            default:
+                break;
+        }
+
+        document.getElementById("loader_table").style.display='None';
+        document.getElementById("id_table").style.display='block';
+        
+        document.getElementById("id_titulo_table").style.display='block';
+        document.getElementById("id_total_tb_tienda").style.display='block';
+        document.getElementById("id_total_tb_sv_su").style.display='block';
+        document.getElementById("id_total_tb_f").style.display='block';
+    }
+
+    area()
+    formato_local_area_table()
+
+    function waitloader(){
+        setTimeout(()=>{
+            document.getElementById("loader").style.display='None';
+            document.getElementById("id_cont").style.display='block';
+
+        },3000)
+    }
+
+    $(document).ready(()=>
+        $('#id_imprimir').click(function(){
+            $.print('#id_imp')
+        })
+    )
+
+    </script>
+    
+</body>
+</html>

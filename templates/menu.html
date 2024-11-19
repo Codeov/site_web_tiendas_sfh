@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistemas BI - BST</title>
+    <link rel="stylesheet" href="{{url_for('static',filename='css/menu.css')}}">
+</head>
+<body>
+    <div class="cab">
+        <ul>
+            <!--<li class="p">
+                <a>Comercial</a>
+                <div class="s">
+                    <a>Validacion Rebate</a>
+                </div>
+            </li>-->
+    
+            <li class="p">
+                <a>Sistemas</a>
+                <div class="s">
+                    <a href="{{url_for('costos')}}">Costos</a>
+                </div>
+            </li>
+    
+            <li class="p">
+                <a>Tiendas</a>
+                <div class="s">
+                    <a href="{{url_for('pollos')}}">Pollo Rostizado</a>
+                    <a href="{{url_for('venta_cero')}}">Venta Cero</a>
+                    <!--<a>Venta Cero</a>-->
+                </div>
+            </li>
+
+            <li class="p">
+                <a>Comercial</a>
+                <div class="s">
+                    <a href="{{url_for('procesar_val_rebate')}}">Procesar Validacion Rebate</a>
+                </div>
+            </li>
+    
+            <li style="float:right"><a class="active" href="{{ url_for('logout') }}">Salir</a></li>
+        </ul>
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        {% for message in messages %}
+            <strong style="color:red;">{{ message }}</strong>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+        <h2 style="margin:10px; text-align: right;">¡Hola {{current_user.fullname}}!</h2>
+        <h4 style="margin:0; margin-left:10px; text-align: right;margin-bottom: 10px;">Encuentra todo lo que necesitas en Sistemas BI </h4>
+        <div style="border: 1px solid #5bb493; width:100%">
+        </div>
+    </div>
+    <div class="body_1">
+        <div class="gallery">
+            <img src="{{url_for('static',filename='imagenes/Jokr.png')}}" width="600" height="400">
+        </div>
+
+        <div class="gallery">
+                <img src="{{url_for('static',filename='imagenes/mass.png')}}" width="600" height="400">
+        </div>
+
+        <div class="gallery">
+            <img src="{{url_for('static',filename='imagenes/Makro.png')}}" width="600" height="400">
+        </div>
+    </div>
+    
+    <div class="body_2">
+        <div class="gallery" style="border:none">
+            <img src="{{url_for('static',filename='imagenes/PlazaVea.png')}}" width="600" height="400">
+        </div>
+    </div>
+
+    <div style="border: 1px solid #5bb493; width:100%;margin-bottom: 10px;">
+    </div>
+
+    <div class="footer">
+        <p>Sistemas BI © 2025 - BST</p>
+    </div>
+
+
+</body>
+</html>

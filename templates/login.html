@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistemas BI - BST</title>
+    <link rel="stylesheet" href="{{url_for('static',filename='css/login.css')}}">
+</head>
+<body>
+    <div class="body">
+
+        <div class="cab">
+            <h1 class="cab_h1">Bienvenidos a la Intranet BI</h1>
+        </div>
+    
+        <div class="cp_prin">
+            <div class="col40">
+                <img src="{{url_for('static',filename='imagenes/BI.png')}}" alt="bi">
+            </div>
+    
+            <div class="col60">
+                <form action="/login" method="POST">
+                    <div class="form-cp">
+                        <div class="form_col_40">
+                            <label for="id_email">Correo:</label>
+                        </div>
+                        <div class="form_col_60">
+                            <input id="id_email" name="email" type="email" placeholder="Your Email...">
+                        </div>
+
+                        <div class="form_col_40">
+                            <label for="id_contraseña">Contraseña:</label>
+                        </div>
+                        <div class="form_col_60">
+                            <input id="id_contraseña" name="contraseña" type="password" placeholder="Your Password..." required>
+                        </div>
+
+                        <div class="form_submit">
+                            <input type="submit" value="Iniciar Sesión">
+                        </div> 
+                        {% with messages = get_flashed_messages() %}
+                        {% if messages %}
+                        {% for message in messages %}
+                            <strong style="color:red;">{{ message }}</strong>
+                        {% endfor %}
+                        {% endif %}
+                        {% endwith %}
+                    </div>                                          
+                </form>
+            </div>
+        </div>
+        <br>
+        <div class="contact-section">
+            <p>Comunícate con nosotros</p>
+            <p><strong>Escríbenos</strong></p>
+            <p>Estamos para ayudarte</p>
+            <p><a>Spsa-informacionBI@spsa.pe</a></p>
+        </div>
+        <div class="footer">
+            <p>Sistemas BI © 2025 - BST</p>
+        </div>
+
+    </div>
+</body>
+</html>

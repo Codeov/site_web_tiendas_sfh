@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Procesar Validacion Rebate</title>
+    <link rel="stylesheet" href="{{ url_for('static',filename='css/proc_val_reb.css') }}">
+    <link href="https://getbootstrap.com/docs/4.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+</head>
+<body>
+
+    <section class="content">
+        <div class="row" style="padding-top: 30px;">
+            <div class="col-sm-6 offset-sm-3">
+                <div class="box box-warning">
+                    <div class="box-header with-border">
+                        <h3 class="box-title">Procesar Validacion Rebate</h3>
+                    </div>
+
+                    <form id="informacionSolicitante" class="user" >
+                        <div class="box-body">
+                            <div class="form-group">
+                                <label for="periodo">Seleccione un periodo:</label>
+                                
+                                <select id="periodo" name="periodo" class="form-control form-control-user" onchange="mostrar_opciones_procesamiento()">
+                                
+                                </select>
+                            </div>
+                    
+                            <div class="box-footer">
+                                <div id="opciones_procesamiento">
+                                    <button type="button" class="btn btn-primary btn-user btn-block" onclick="procesar_val_reb()">Procesar</button>
+                                    <button type="button" class="btn btn-primary btn-user btn-block" onclick="actualizar_cierre_validacion()">Cerrar Periodo</button>
+                                </div><br>
+                                
+                                <a type="button" class="btn btn-secondary btn-user btn-block" href="{{url_for('menu')}}">Ir a Menu
+                                </a>
+                            </div>
+
+                        </div>
+                    </form>
+                   
+                    <div id="mensaje" style="padding-top: 15px;"></div>
+                </div>
+            </div>
+        </div>
+        
+    </section>
+    <div id="loader_table">
+    </div>
+
+    <script>
+        function mostrar_opciones_procesamiento(){
+            const item_mes_selecccionado=document.getElementById("periodo").value
+            console.log(item_mes_selecccionado)
+            if (item_mes_selecccionado){
+                document.getElementById("opciones_procesamiento").style.display="block"
+
+            } else{
+                document.getElementById("opciones_procesamiento").style.display="none"
+            }
+        }
+        mostrar_opciones_procesamiento()
+
+        async function actualizar_cierre_validacion(){
+            document.getElementById("loader_table").style.display='block';
+            const periodo=document.getElementById("periodo").value
+            const response=await fetch('actualizar_cierre_validacion/'+periodo)
+            let req_status=response.status
+            if (req_status==200)
+                {
+                    flag_data_reb_acum=await response.json()
+                    console.log(flag_data_reb_acum)
+                    if(flag_data_reb_acum.flag_val_reb_ac_==0)
+                    {
+                        alert(`Lo siento!! No se procede con el cierre, pues aun no hay data para el periodo ${periodo}`)
+                    }
+                    if(flag_data_reb_acum.flag_val_reb_ac_==1)
+                    {
+                        alert(`Exitos!! Se procedió con el cierre para el periodo ${periodo}`)
+                    }
+                    if(flag_data_reb_acum.flag_val_reb_ac_==2)
+                    {
+                        alert(`Cuidado!! El periodo ${periodo} ya se encuentra cerrado`)
+                    }
+                }
+                else
+                {
+                    alert(`Error en el procesamiento de solicitud, response ${req_status}`)
+                }
+                document.getElementById("loader_table").style.display='None';
+        }
+
+        function generarListaDeMeses(cantidadMeses) {
+            var listaDeMeses = [];
+            var hoy = new Date();
+            var añoActual = hoy.getFullYear();
+            var mesActual = hoy.getMonth(); 
+
+            for (var i = 0; i < cantidadMeses; i++) {
+                var mes = mesActual - i;
+                var año = añoActual;
+
+                while (mes < 0) {
+                    mes += 12;
+                    año -= 1;
+                }
+
+                var mesFormato = (mes + 1).toString().padStart(2, '0'); 
+                var fechaFormato = `${año}-${mesFormato}`;
+
+                listaDeMeses.push(fechaFormato);
+            }
+
+            listaDeMeses.reverse();
+            return listaDeMeses;
+        }
+
+        async function setear_periodo_select(){
+            const cantidadMeses = 10; 
+            const listaDeMeses = generarListaDeMeses(cantidadMeses);
+            const optionPeriodoDefault=`<option value="">-- Seleccionar --</option>`
+            const optionPeriodoBucle= listaDeMeses.map(mes => `<option>${mes}</option>`).join('');
+            const optionFinal=optionPeriodoDefault+optionPeriodoBucle
+            //console.log(optionFinal)
+            document.getElementById("periodo").innerHTML = optionFinal;
+        }
+
+        document.getElementById("loader_table").style.display='None';
+        setear_periodo_select();
+        
+        async function procesar_val_reb(){
+            document.getElementById("loader_table").style.display='block';
+            document.getElementById("mensaje").innerHTML='';
+            const periodo = document.getElementById("periodo").value;
+            console.log(periodo);
+
+            try {
+                const response = await fetch('procesar_val_rebate_input/' + periodo);
+                const req_status = response.status;
+                //console.log(req_status);
+                const id_mensaje = document.getElementById("mensaje");
+                if (req_status === 200) {
+                    document.getElementById("loader_table").style.display='None';
+                    
+                    data=await response.json()
+                    if (data.flag_data==0){
+                        alert(`Aun no hay data en PMM para el periodo ${periodo}`)
+                    }
+
+                    if (data.flag_data==1){
+                        alert(`Se terminó de procesar la data de validación periodo ${periodo} ,favor actualizar los reportes`)
+                    }
+
+                    if (data.flag_data==2){
+                        alert(`Lo siento!! No puedo procesar, el periodo ${periodo} ya se encuentra cerrado`)
+                    }
+
+                    id_mensaje.innerHTML = 'Status 200 todo ok...';
+      
+                } else {
+                    document.getElementById("loader_table").style.display='None';
+                    id_mensaje.innerHTML = 'Error: ' + response.status;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById("mensaje").innerHTML = 'Error al procesar la solicitud, intentar nuevamente. Si el problema persite contactar a Sistemas BI';
+                document.getElementById("loader_table").style.display='None';
+            }
+            
+        }
+    </script>
+    
+</body>
+</html>
