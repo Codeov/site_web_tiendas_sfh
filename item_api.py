@@ -10,7 +10,7 @@ from model.entidad.user import User as user_form
 from model.modelPollos import modelPollos
 from model.modelVentaCero import modelVentaCero
 from model.modelProcValRebate import modelProcValRebate
-
+##inicio
 app=Flask(__name__)
 app.config.from_object(config['development'])
 login_manager_app = LoginManager(app)
