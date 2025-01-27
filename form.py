@@ -14,5 +14,6 @@ class activarLocCT2(Form):
                                     validate_codigo
                                    ]
                                     )
+#asd
     
     
